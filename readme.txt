@@ -16,7 +16,8 @@ https://zubairirshad.com/portfolio/vehicle-control-for-autonomous-driving-carla-
 
 PID Controller
 https://github.com/carla-simulator/carla/blob/master/PythonAPI/carla/agents/navigation/controller.py
-
+Sensor Reference
+https://carla.readthedocs.io/en/latest/ref_sensors/
 
 import carla
 client = carla.Client('localhost', 2000)
