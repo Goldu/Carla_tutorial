@@ -2,7 +2,7 @@ Carla_testing
 Carla_Sensor
 Carla depth sensor
 Testing
-
+https://carla.readthedocs.io/en/latest/tuto_G_instance_segmentation_sensor/#:~:text=Instance%20segmentation%20is%20a%20new,class%2C%20like%20for%20example%20vehicles.
 
 PID Controller  Implementation in Python
 https://github.com/yan99033/real-time-carla-kalman-filter/blob/main/kalman_filter.py
