@@ -19,6 +19,12 @@ https://github.com/carla-simulator/carla/blob/master/PythonAPI/carla/agents/navi
 Sensor Reference
 https://carla.readthedocs.io/en/latest/ref_sensors/
 
+Papers
+https://github.com/Mina2kamel/Reinforcement-learning-for-self-driving-cars-in-CARLA-simulator/blob/main/Steering_Model_for_Autonomous_Driving_System_using_Deep_Reinforcement_Learning.pdf
+
+
+
+
 import carla
 client = carla.Client('localhost', 2000)
 client.set_timeout(2.0)
