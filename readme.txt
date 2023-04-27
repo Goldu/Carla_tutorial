@@ -1,3 +1,85 @@
+
+import carla
+import numpy as np
+import time
+
+class PIDController():
+    def __init__(self, Kp, Ki, Kd, Ts):
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
+        self.Ts = Ts
+        self.integral = 0.0
+        self.derivative = 0.0
+        self.prev_error = 0.0
+
+    def step(self, error):
+        self.integral += error * self.Ts
+        self.derivative = (error - self.prev_error) / self.Ts
+        self.prev_error = error
+        output = self.Kp * error + self.Ki * self.integral + self.Kd * self.derivative
+        return output
+
+class VehiclePIDController():
+    def __init__(self, vehicle, target_speed):
+        self.vehicle = vehicle
+        self.target_speed = target_speed
+        self.max_throttle = 0.75
+        self.max_brake = 0.3
+        self.max_steering = 0.8
+        self.throttle_controller = PIDController(Kp=1.0, Ki=0.1, Kd=0.1, Ts=0.1)
+        self.steering_controller = PIDController(Kp=0.5, Ki=0.1, Kd=0.1, Ts=0.1)
+
+    def get_speed(self):
+        velocity = self.vehicle.get_velocity()
+        speed = np.sqrt(velocity.x ** 2 + velocity.y ** 2 + velocity.z ** 2)
+        return speed
+
+    def control(self, waypoint):
+        target_speed = self.target_speed
+        current_speed = self.get_speed()
+
+        throttle = 0.0
+        brake = 0.0
+        steering = 0.0
+
+        if target_speed > 0.1:
+            speed_error = target_speed - current_speed
+            throttle = self.throttle_controller.step(speed_error)
+            if throttle > self.max_throttle:
+                throttle = self.max_throttle
+            elif throttle < 0:
+                throttle = 0.0
+                brake = self.max_brake
+            else:
+                brake = 0.0
+
+            location = self.vehicle.get_location()
+            transform = self.vehicle.get_transform()
+            orientation = transform.rotation
+            waypoint_location = waypoint.transform.location
+            dx = waypoint_location.x - location.x
+            dy = waypoint_location.y - location.y
+
+            # convert to radians
+            yaw = np.deg2rad(orientation.yaw)
+            # calculate the distance and angle between the vehicle and the waypoint
+            distance = np.sqrt(dx**2 + dy**2)
+            angle = np.arctan2(dy, dx)
+
+            # calculate the steering command
+            heading_error = yaw - angle
+            steering = self.steering_controller.step(heading_error)
+            steering = np.clip(steering, -self.max_steering, self.max_steering)
+
+        control = carla.VehicleControl(throttle=throttle, brake=brake, steer=steering)
+
+        return control
+
+
+
+
+
 Carla_testing
 Carla_Sensor
 Carla depth sensor
