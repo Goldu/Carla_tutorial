@@ -1,3 +1,41 @@
+import carla
+import math
+
+# Set up CARLA client and connect to server
+client = carla.Client('localhost', 2000)
+client.set_timeout(10.0)
+
+# Get the world object and the vehicle actor
+world = client.get_world()
+vehicle = world.get_actors().filter('vehicle.*')[0]
+
+# Get the list of waypoints
+waypoints = world.get_map().get_waypoints(vehicle.get_location(), 10.0)
+
+# Initialize variables for distance and time
+distance = 0.0
+time = 0.0
+
+# Loop through the waypoints and calculate distance and time
+for i in range(len(waypoints) - 1):
+    start = waypoints[i].transform.location
+    end = waypoints[i + 1].transform.location
+    segment_distance = math.sqrt((end.x - start.x) ** 2 + (end.y - start.y) ** 2)
+    segment_time = (end.timestamp - start.timestamp) * 1e-9
+    distance += segment_distance
+    time += segment_time
+
+# Calculate the current velocity in meters per second (m/s)
+velocity = distance / time
+
+# Print the current velocity
+print(f"Current velocity: {velocity:.2f} m/s")
+
+
+
+
+
+
 
 import carla
 import numpy as np
