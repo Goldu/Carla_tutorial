@@ -1,3 +1,155 @@
+
+######Steering Control
+import carla
+import random
+import time
+import math
+
+# Function to calculate the distance between two points
+def distance(point1, point2):
+    return math.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2 + (point1.z - point2.z)**2)
+
+# Function to calculate the angle between two vectors
+def angle_between_vectors(vec1, vec2):
+    return math.acos(vec1.dot(vec2) / (vec1.length() * vec2.length()))
+
+# Connect to the Carla server
+client = carla.Client('localhost', 2000)
+client.set_timeout(2.0)
+
+# Retrieve the world object
+world = client.get_world()
+
+# Get the blueprint of a vehicle
+vehicle_bp = random.choice(world.get_blueprint_library().filter('vehicle.*'))
+
+# Spawn the vehicle at a random location
+spawn_point = random.choice(world.get_map().get_spawn_points())
+vehicle = world.spawn_actor(vehicle_bp, spawn_point)
+
+# Get the list of waypoints on a specific road
+waypoints = world.get_map().get_waypoints(spawn_point.location)
+
+# Set the target speed and acceleration of the vehicle
+target_speed = 10.0  # m/s
+target_acceleration = 1.0  # m/s^2
+
+# Set the maximum distance to the next waypoint at which to accelerate
+max_distance = 10.0  # meters
+
+# Set the maximum angle to the next waypoint at which to start turning
+max_angle = math.radians(10.0)  # radians
+
+# Track the waypoints with the vehicle
+for i, waypoint in enumerate(waypoints):
+    # Get the current location and velocity of the vehicle
+    location = vehicle.get_location()
+    velocity = vehicle.get_velocity()
+
+    # Calculate the distance to the next waypoint
+    distance_to_waypoint = distance(location, waypoint.transform.location)
+
+    # Calculate the required acceleration to reach the target speed
+    required_acceleration = (target_speed - velocity.x) / max(0.1, distance_to_waypoint)
+
+    # Apply the required acceleration up to the target acceleration
+    acceleration = min(target_acceleration, max(-target_acceleration, required_acceleration))
+    throttle = acceleration / target_acceleration
+    brake = 0.0
+
+    # Calculate the vector pointing from the current location of the vehicle to the next waypoint
+    waypoint_vector = waypoint.transform.location - location
+
+    # Calculate the orientation of the vehicle and the heading vector
+    vehicle_orientation = vehicle.get_transform().rotation.get_forward_vector()
+    vehicle_heading = carla.Vector3D(vehicle_orientation.x, vehicle_orientation.y, 0.0)
+
+    # Calculate the angle between the heading vector and the waypoint vector
+    angle_to_waypoint = angle_between_vectors(waypoint_vector, vehicle_heading)
+
+    # Set the steering angle of the vehicle based on the angle to the next waypoint
+    if angle_to_waypoint > max_angle:
+        sign = (waypoint_vector.y > vehicle_heading.y) - (waypoint_vector.y < vehicle_heading.y)
+        steer = sign * 0.3  # adjust the steering angle here as needed
+    else:
+        steer = 0.0
+
+    # Brake if the distance
+
+
+#------------------------------------------------
+import carla
+import random
+import time
+
+# Function to calculate the distance between two points
+def distance(point1, point2):
+    return math.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2 + (point1.z - point2.z)**2)
+
+# Connect to the Carla server
+client = carla.Client('localhost', 2000)
+client.set_timeout(2.0)
+
+# Retrieve the world object
+world = client.get_world()
+
+# Get the blueprint of a vehicle
+vehicle_bp = random.choice(world.get_blueprint_library().filter('vehicle.*'))
+
+# Spawn the vehicle at a random location
+spawn_point = random.choice(world.get_map().get_spawn_points())
+vehicle = world.spawn_actor(vehicle_bp, spawn_point)
+
+# Get the list of waypoints on a specific road
+waypoints = world.get_map().get_waypoints(spawn_point.location)
+
+# Set the target speed and acceleration of the vehicle
+target_speed = 10.0  # m/s
+target_acceleration = 1.0  # m/s^2
+
+# Set the maximum distance to the next waypoint at which to accelerate
+max_distance = 10.0  # meters
+
+# Track the waypoints with the vehicle
+for i, waypoint in enumerate(waypoints):
+    # Get the current location and velocity of the vehicle
+    location = vehicle.get_location()
+    velocity = vehicle.get_velocity()
+
+    # Calculate the distance to the next waypoint
+    distance_to_waypoint = distance(location, waypoint.transform.location)
+
+    # Calculate the required acceleration to reach the target speed
+    required_acceleration = (target_speed - velocity.x) / max(0.1, distance_to_waypoint)
+
+    # Apply the required acceleration up to the target acceleration
+    acceleration = min(target_acceleration, max(-target_acceleration, required_acceleration))
+    throttle = acceleration / target_acceleration
+    brake = 0.0
+    steer = 0.0
+
+    # Brake if the distance to the next waypoint is less than the maximum distance
+    if distance_to_waypoint < max_distance:
+        brake = abs(acceleration)
+
+    # Set the control inputs of the vehicle
+    control = carla.VehicleControl(throttle, brake, steer)
+    vehicle.apply_control(control)
+
+    # Set the target location of the vehicle to the current waypoint
+    vehicle.set_transform(waypoint.transform)
+
+    # Wait for a short time to simulate the movement of the vehicle
+    time.sleep(0.1)
+
+    # Print the current waypoint index and the current location and velocity of the vehicle
+    print("Waypoint {}/{} - Location: ({}, {}, {}), Velocity: ({}, {}, {})".format(i+1, len(waypoints),
+        location.x, location.y, location.z, velocity.x, velocity.y, velocity.z))
+
+# Destroy the vehicle
+vehicle.destroy()
+
+#------------------------------------------------
 import carla
 import numpy as np
 
