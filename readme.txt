@@ -1,3 +1,71 @@
+import carla
+import numpy as np
+
+# Connect to the CARLA simulator
+client = carla.Client('localhost', 2000)
+client.set_timeout(10.0)
+
+# Load the map
+world = client.load_world('my_custom_map')
+
+# Get the list of waypoints
+map = world.get_map()
+waypoints = map.generate_waypoints(distance_between=2.0)
+
+# Create a vehicle actor
+spawn_point = waypoints[0].transform
+vehicle_bp = world.get_blueprint_library().find('vehicle.audi.a2')
+vehicle = world.spawn_actor(vehicle_bp, spawn_point)
+
+# Define the desired waypoints
+desired_waypoints = waypoints[50:100]
+
+# Define the controller parameters
+target_speed = 20.0  # m/s
+Kp = 1.0
+Kd = 0.1
+
+# Main loop
+while True:
+    # Get the current vehicle position
+    vehicle_loc = vehicle.get_location()
+    vehicle_yaw = np.deg2rad(vehicle.get_transform().rotation.yaw)
+
+    # Find the closest waypoint to the vehicle
+    min_dist = float('inf')
+    closest_wp = None
+    for wp in desired_waypoints:
+        dist = np.linalg.norm(np.array([wp.transform.location.x, wp.transform.location.y]) - np.array([vehicle_loc.x, vehicle_loc.y]))
+        if dist < min_dist:
+            min_dist = dist
+            closest_wp = wp
+
+    # Compute the cross track error
+    dx = closest_wp.transform.location.x - vehicle_loc.x
+    dy = closest_wp.transform.location.y - vehicle_loc.y
+    cte = np.sin(np.arctan2(dy, dx) - vehicle_yaw) * np.linalg.norm([dx, dy])
+
+    # Compute the desired heading
+    desired_heading = np.arctan2(dy, dx)
+
+    # Compute the steering angle and throttle
+    steering_error = desired_heading - vehicle_yaw
+    steering_angle = np.clip(Kp * cte + Kd * steering_error, -1.0, 1.0)
+    throttle = np.clip(target_speed - vehicle.get_velocity().length(), 0.0, 1.0)
+
+    # Apply the control signals
+    vehicle.apply_control(carla.VehicleControl(throttle=throttle, steer=steering_angle))
+
+    # Check if we have reached the final waypoint
+    if closest_wp == desired_waypoints[-1]:
+        break
+
+# Destroy the actor and cleanup
+vehicle.destroy()
+
+
+
+#------------------------------------------
 import numpy as np
 import carla
 import math
